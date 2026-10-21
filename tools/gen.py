@@ -127,8 +127,12 @@ def cpp_str(s: str) -> str:
     return json.dumps(s, ensure_ascii=False)
 
 
+def cpp_float(value: float) -> str:
+    return f"{float(value)!r}F"
+
+
 def cpp_floats(values: list[float]) -> str:
-    return "{" + ", ".join(f"{v:.6g}f" for v in values) + "}"
+    return "{" + ", ".join(cpp_float(v) for v in values) + "}"
 
 
 def cpp_value(desc: dict[str, Any], value: Any) -> str:
@@ -136,8 +140,8 @@ def cpp_value(desc: dict[str, Any], value: Any) -> str:
     if kind == "color":
         return f"ParamValue::color({cpp_floats(hex_to_rgb(value))})"
     if kind == "palette":
-        return f"ParamValue::palette({cpp_str(value)})"
-    return f"ParamValue::number({float(value):.6g}f)"
+        return f"ParamValue::named({cpp_str(value)})"
+    return f"ParamValue::number({cpp_float(value)})"
 
 
 def emit_cpp(data: dict[str, Any]) -> str:
@@ -146,7 +150,6 @@ def emit_cpp(data: dict[str, Any]) -> str:
         "// NOLINTBEGIN",
         "#pragma once",
         "",
-        "#include <array>",
         "#include <string_view>",
         "#include <vector>",
         "",
@@ -169,7 +172,7 @@ def emit_cpp(data: dict[str, Any]) -> str:
             lo, hi = float(d.get("min", 0)), float(d.get("max", 0))
             params.append(
                 f"{{{cpp_str(pname)}, ParamType::{d['type'].capitalize()}, "
-                f"{cpp_value(d, d['default'])}, {lo:.6g}f, {hi:.6g}f}}"
+                f"{cpp_value(d, d['default'])}, {cpp_float(lo)}, {cpp_float(hi)}}}"
             )
         out.append(
             f"    {{{cpp_str(name)}, {cpp_str(pdesc['label'])}, k{name.capitalize()}Shader, "
@@ -214,9 +217,7 @@ def main() -> int:
     except ManifestError as err:
         print(f"gen.py: {err}", file=sys.stderr)
         return 1
-    targets = {WEB_OUT: emit_js(data)}
-    if (ROOT / "cpp" / "CMakeLists.txt").exists():
-        targets[CPP_OUT] = emit_cpp(data)
+    targets = {WEB_OUT: emit_js(data), CPP_OUT: emit_cpp(data)}
     stale = []
     for path, text in targets.items():
         if path.exists() and path.read_text() == text:
