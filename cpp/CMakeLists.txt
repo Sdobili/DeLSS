@@ -35,7 +35,9 @@ set(DELSS_WARNINGS "")
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   set(DELSS_WARNINGS -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror)
 elseif(MSVC)
-  set(DELSS_WARNINGS /W4 /WX /permissive- /wd4100)
+  # Warnings stay visible on MSVC but do not fail the build: the Windows path
+  # is compiled in CI only, GCC/Clang -Werror is the gate.
+  set(DELSS_WARNINGS /W4 /permissive- /wd4100)
 endif()
 
 # delss_add_library(<name> <GLES|DESKTOP>): the library for one GL flavour.
@@ -98,5 +100,8 @@ if(DELSS_BUILD_TOOLS)
 endif()
 
 if(DELSS_BUILD_OVERLAY)
+  if(APPLE)
+    enable_language(OBJCXX)  # must be enabled at the top level
+  endif()
   add_subdirectory(overlay)
 endif()

@@ -36,7 +36,6 @@ if(WIN32)
   target_link_libraries(delss-overlay PRIVATE d3d11 dxgi user32 shell32)
   set_target_properties(delss-overlay PROPERTIES WIN32_EXECUTABLE OFF)
 elseif(APPLE)
-  enable_language(OBJCXX)
   target_sources(delss-overlay PRIVATE platform/macos/macos_platform.mm platform/macos/macos_tray.mm)
   set_source_files_properties(platform/macos/macos_platform.mm platform/macos/macos_tray.mm PROPERTIES COMPILE_FLAGS
                                                                                                      "-fobjc-arc")
