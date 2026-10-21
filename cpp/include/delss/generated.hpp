@@ -242,10 +242,13 @@ void main() {
   vec3 c = src(suv).rgb;
   vec3 blur = (src(suv + vec2(texel().x * 2.0, 0.0)).rgb + src(suv - vec2(texel().x * 2.0, 0.0)).rgb) * 0.5;
   c = max(c, blur * u_glow);
-  // Gaussian beam profile across the line: bright lines are wider.
+  // Gaussian beam profile across the line: bright lines are wider. Dividing
+  // by the profile's mean over one line keeps average brightness unchanged,
+  // like turning up a real CRT's brightness to compensate for the gaps.
   float d = fract(line) - 0.5;
-  float beam = exp(-d * d / (0.06 + 0.1 * luma(c)));
-  c *= mix(1.0, beam * 1.25, u_scanlines);
+  float width = 0.06 + 0.1 * luma(c);
+  float beam = exp(-d * d / width) / min(1.0, sqrt(3.14159265 * width));
+  c *= mix(1.0, beam, u_scanlines);
   // Aperture grille: R, G, B stripes, one output pixel each.
   int stripe = int(mod(gl_FragCoord.x, 3.0));
   vec3 m = vec3(stripe == 0, stripe == 1, stripe == 2);
