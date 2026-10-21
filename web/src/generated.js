@@ -618,14 +618,15 @@ export const PRESETS = [
       {
         "pass": "kuwahara",
         "params": {
-          "radius": 2
+          "radius": 3
         }
       },
       {
         "pass": "cel",
         "params": {
           "bands": 3,
-          "saturation": 1.4
+          "saturation": 1.4,
+          "brightness": 1.35
         }
       },
       {
@@ -639,7 +640,7 @@ export const PRESETS = [
         "pass": "ink",
         "params": {
           "width": 2.5,
-          "threshold": 0.25
+          "threshold": 0.45
         }
       },
       {
