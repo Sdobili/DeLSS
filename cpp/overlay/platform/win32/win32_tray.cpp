@@ -7,8 +7,9 @@
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
-#include <shellapi.h>
 #include <windows.h>
+// windows.h must come first.
+#include <shellapi.h>
 
 #include <string>
 #include <vector>
