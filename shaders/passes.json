@@ -1,0 +1,384 @@
+{
+  "pixelate": {
+    "label": "Pixelate",
+    "params": {
+      "pixelSize": {
+        "type": "float",
+        "default": 4,
+        "min": 1,
+        "max": 32,
+        "step": 1,
+        "label": "Pixel size"
+      }
+    }
+  },
+  "palette": {
+    "label": "Palette / dither",
+    "params": {
+      "palette": {
+        "type": "palette",
+        "default": "pico8",
+        "label": "Palette (none = levels)"
+      },
+      "levels": {
+        "type": "float",
+        "default": 32,
+        "min": 2,
+        "max": 64,
+        "step": 1,
+        "label": "Levels per channel"
+      },
+      "dither": {
+        "type": "float",
+        "default": 0.6,
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "label": "Dither"
+      },
+      "ditherScale": {
+        "type": "float",
+        "default": 4,
+        "min": 1,
+        "max": 32,
+        "step": 1,
+        "label": "Dither cell"
+      },
+      "ditherMatrix": {
+        "type": "int",
+        "default": 0,
+        "min": 0,
+        "max": 1,
+        "step": 1,
+        "label": "Matrix (0 Bayer, 1 PS1)"
+      },
+      "mapping": {
+        "type": "int",
+        "default": 0,
+        "min": 0,
+        "max": 1,
+        "step": 1,
+        "label": "Mapping (0 nearest, 1 luma ramp)"
+      },
+      "exposure": {
+        "type": "float",
+        "default": 1,
+        "min": 0.5,
+        "max": 2,
+        "step": 0.01,
+        "label": "Exposure"
+      }
+    }
+  },
+  "kuwahara": {
+    "label": "Kuwahara paint",
+    "params": {
+      "radius": {
+        "type": "float",
+        "default": 3,
+        "min": 1,
+        "max": 6,
+        "step": 1,
+        "label": "Radius"
+      }
+    }
+  },
+  "cel": {
+    "label": "Cel bands",
+    "params": {
+      "bands": {
+        "type": "float",
+        "default": 4,
+        "min": 2,
+        "max": 8,
+        "step": 1,
+        "label": "Bands"
+      },
+      "softness": {
+        "type": "float",
+        "default": 0.15,
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "label": "Softness"
+      },
+      "saturation": {
+        "type": "float",
+        "default": 1.25,
+        "min": 0,
+        "max": 2,
+        "step": 0.01,
+        "label": "Saturation"
+      },
+      "brightness": {
+        "type": "float",
+        "default": 1.15,
+        "min": 0.5,
+        "max": 2,
+        "step": 0.01,
+        "label": "Brightness"
+      }
+    }
+  },
+  "ink": {
+    "label": "Ink outlines",
+    "params": {
+      "width": {
+        "type": "float",
+        "default": 1.5,
+        "min": 0.5,
+        "max": 6,
+        "step": 0.1,
+        "label": "Edge width"
+      },
+      "threshold": {
+        "type": "float",
+        "default": 0.4,
+        "min": 0.02,
+        "max": 2,
+        "step": 0.01,
+        "label": "Threshold"
+      },
+      "inkColor": {
+        "type": "color",
+        "default": "#14101a",
+        "label": "Ink color"
+      },
+      "depthWeight": {
+        "type": "float",
+        "default": 1,
+        "min": 0,
+        "max": 4,
+        "step": 0.05,
+        "label": "Depth weight"
+      },
+      "normalWeight": {
+        "type": "float",
+        "default": 1,
+        "min": 0,
+        "max": 4,
+        "step": 0.05,
+        "label": "Normal weight"
+      }
+    }
+  },
+  "halftone": {
+    "label": "Halftone",
+    "params": {
+      "dotSize": {
+        "type": "float",
+        "default": 6,
+        "min": 2,
+        "max": 24,
+        "step": 0.5,
+        "label": "Dot size"
+      },
+      "angle": {
+        "type": "float",
+        "default": 45,
+        "min": 0,
+        "max": 90,
+        "step": 1,
+        "label": "Screen angle"
+      },
+      "paperColor": {
+        "type": "color",
+        "default": "#f7f0dc",
+        "label": "Paper"
+      },
+      "dotColor": {
+        "type": "color",
+        "default": "#14101a",
+        "label": "Dots"
+      },
+      "shadowOnly": {
+        "type": "float",
+        "default": 1,
+        "min": 0,
+        "max": 1,
+        "step": 1,
+        "label": "Shadows only"
+      }
+    }
+  },
+  "crt": {
+    "label": "CRT",
+    "params": {
+      "curvature": {
+        "type": "float",
+        "default": 0.35,
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "label": "Curvature"
+      },
+      "scanlines": {
+        "type": "float",
+        "default": 0.7,
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "label": "Scanlines"
+      },
+      "lineHeight": {
+        "type": "float",
+        "default": 3,
+        "min": 2,
+        "max": 12,
+        "step": 1,
+        "label": "Line height"
+      },
+      "mask": {
+        "type": "float",
+        "default": 0.25,
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "label": "Aperture mask"
+      },
+      "vignette": {
+        "type": "float",
+        "default": 0.6,
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "label": "Vignette"
+      },
+      "glow": {
+        "type": "float",
+        "default": 0.8,
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "label": "Glow"
+      }
+    }
+  },
+  "vhs": {
+    "label": "VHS tape",
+    "params": {
+      "chromaBlur": {
+        "type": "float",
+        "default": 6,
+        "min": 0,
+        "max": 24,
+        "step": 0.5,
+        "label": "Chroma blur"
+      },
+      "chromaShift": {
+        "type": "float",
+        "default": 2,
+        "min": -8,
+        "max": 8,
+        "step": 0.5,
+        "label": "Chroma shift"
+      },
+      "noise": {
+        "type": "float",
+        "default": 0.25,
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "label": "Tracking noise"
+      },
+      "sharpen": {
+        "type": "float",
+        "default": 0.6,
+        "min": 0,
+        "max": 2,
+        "step": 0.05,
+        "label": "Luma sharpen"
+      }
+    }
+  },
+  "grade": {
+    "label": "Old photo grade",
+    "params": {
+      "sepia": {
+        "type": "float",
+        "default": 0.85,
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "label": "Sepia"
+      },
+      "saturation": {
+        "type": "float",
+        "default": 0.4,
+        "min": 0,
+        "max": 2,
+        "step": 0.01,
+        "label": "Saturation"
+      },
+      "contrast": {
+        "type": "float",
+        "default": 1.1,
+        "min": 0.5,
+        "max": 2,
+        "step": 0.01,
+        "label": "Contrast"
+      },
+      "fade": {
+        "type": "float",
+        "default": 0.1,
+        "min": 0,
+        "max": 0.5,
+        "step": 0.01,
+        "label": "Faded blacks"
+      },
+      "vignette": {
+        "type": "float",
+        "default": 0.7,
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "label": "Vignette"
+      },
+      "grain": {
+        "type": "float",
+        "default": 0.06,
+        "min": 0,
+        "max": 0.3,
+        "step": 0.005,
+        "label": "Grain"
+      },
+      "grainSpeed": {
+        "type": "float",
+        "default": 0,
+        "min": 0,
+        "max": 1,
+        "step": 0.05,
+        "label": "Grain speed"
+      }
+    }
+  },
+  "temporal": {
+    "label": "Temporal stabilizer",
+    "params": {
+      "stability": {
+        "type": "float",
+        "default": 0.98,
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "label": "Stability"
+      },
+      "tolerance": {
+        "type": "float",
+        "default": 0.02,
+        "min": 0,
+        "max": 0.2,
+        "step": 0.005,
+        "label": "Tolerance"
+      },
+      "cell": {
+        "type": "float",
+        "default": 1,
+        "min": 1,
+        "max": 32,
+        "step": 1,
+        "label": "Block size"
+      }
+    }
+  }
+}

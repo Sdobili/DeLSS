@@ -1,0 +1,87 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>DeLSS test harness</title>
+<canvas id="c"></canvas>
+<script type="module">
+  import { DeLSS } from '../src/delss.js';
+  import { GBufferScene } from '../demo/scene.js';
+
+  const canvas = document.getElementById('c');
+  const gl = canvas.getContext('webgl2', { preserveDrawingBuffer: true, antialias: false });
+  if (!gl) throw new Error('WebGL2 unavailable');
+  const delss = new DeLSS(gl);
+
+  async function texture(url) {
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return { tex, width: img.width, height: img.height };
+  }
+
+  /** Read the canvas top-down as base64 RGBA. */
+  function read(w, h) {
+    const px = new Uint8Array(w * h * 4);
+    gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    const flipped = new Uint8Array(px.length);
+    for (let y = 0; y < h; ++y) {
+      flipped.set(px.subarray((h - 1 - y) * w * 4, (h - y) * w * 4), y * w * 4);
+    }
+    let s = '';
+    for (let i = 0; i < flipped.length; i += 0x8000) {
+      s += String.fromCharCode(...flipped.subarray(i, i + 0x8000));
+    }
+    return btoa(s);
+  }
+
+  /**
+   * frames: list of {color, depth?, normal?} URLs. Renders each in order with
+   * the same chain (history carries over) and returns every output.
+   */
+  window.runChain = async ({ chain, frames }) => {
+    const outputs = [];
+    delss.setChain(chain);
+    for (const f of frames) {
+      const color = await texture(f.color);
+      const depth = f.depth ? (await texture(f.depth)).tex : null;
+      const normal = f.normal ? (await texture(f.normal)).tex : null;
+      canvas.width = color.width;
+      canvas.height = color.height;
+      delss.render({ color: color.tex, depth, normal }, { width: color.width, height: color.height });
+      outputs.push(read(color.width, color.height));
+      for (const t of [color.tex, depth, normal]) if (t) gl.deleteTexture(t);
+    }
+    return { width: canvas.width, height: canvas.height, outputs, renderer: rendererName() };
+  };
+
+  function rendererName() {
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    return ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+  }
+  /** Render the demo scene's G-buffer and return color/depth/normal as base64 RGBA. */
+  window.dumpScene = ({ time, width, height }) => {
+    const scene = new GBufferScene(gl);
+    scene.render(time, time - 1 / 30, width, height);
+    canvas.width = width;
+    canvas.height = height;
+    const out = {};
+    ['color', 'depth', 'normal'].forEach((name, i) => {
+      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, scene.fbo);
+      gl.readBuffer(gl.COLOR_ATTACHMENT0 + i);
+      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
+      gl.blitFramebuffer(0, 0, width, height, 0, 0, width, height, gl.COLOR_BUFFER_BIT, gl.NEAREST);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      out[name] = read(width, height);
+    });
+    return out;
+  };
+  window.ready = true;
+</script>
