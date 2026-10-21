@@ -1,0 +1,25 @@
+{
+  "name": "delss",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reverse DLSS: real-time stylization post-processing (WebGL2 + C++/GLES3).",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "gen": "python3 tools/gen.py",
+    "gen:check": "python3 tools/gen.py --check",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "test": "node --test tests/web/",
+    "golden:update": "UPDATE_GOLDEN=1 node --test tests/web/",
+    "serve": "node tools/serve.mjs web 8080"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "globals": "^17.13.0",
+    "playwright": "1.64",
+    "pngjs": "^7.0.0",
+    "prettier": "^3.9.10"
+  }
+}

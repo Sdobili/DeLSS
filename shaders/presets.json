@@ -1,0 +1,224 @@
+[
+  {
+    "id": "cel",
+    "label": "Cel / 赛璐璐",
+    "passes": [
+      {
+        "pass": "kuwahara",
+        "params": {
+          "radius": 3
+        }
+      },
+      {
+        "pass": "cel",
+        "params": {
+          "bands": 4
+        }
+      },
+      {
+        "pass": "ink",
+        "params": {
+          "width": 1.5
+        }
+      },
+      {
+        "pass": "temporal"
+      }
+    ]
+  },
+  {
+    "id": "comic",
+    "label": "Comic ink / 美漫",
+    "passes": [
+      {
+        "pass": "kuwahara",
+        "params": {
+          "radius": 2
+        }
+      },
+      {
+        "pass": "cel",
+        "params": {
+          "bands": 3,
+          "saturation": 1.4
+        }
+      },
+      {
+        "pass": "halftone",
+        "params": {
+          "dotSize": 5,
+          "shadowOnly": 1
+        }
+      },
+      {
+        "pass": "ink",
+        "params": {
+          "width": 2.5,
+          "threshold": 0.25
+        }
+      },
+      {
+        "pass": "temporal"
+      }
+    ]
+  },
+  {
+    "id": "pixel",
+    "label": "Pixel art (PICO-8) / 像素",
+    "passes": [
+      {
+        "pass": "pixelate",
+        "params": {
+          "pixelSize": 4
+        }
+      },
+      {
+        "pass": "palette",
+        "params": {
+          "palette": "pico8",
+          "dither": 0.5,
+          "ditherScale": 4,
+          "exposure": 1.2
+        }
+      },
+      {
+        "pass": "temporal",
+        "params": {
+          "cell": 4
+        }
+      }
+    ]
+  },
+  {
+    "id": "ps1",
+    "label": "PS1 / 低多边形时代",
+    "passes": [
+      {
+        "pass": "pixelate",
+        "params": {
+          "pixelSize": 4
+        }
+      },
+      {
+        "pass": "palette",
+        "params": {
+          "palette": "none",
+          "levels": 20,
+          "dither": 1,
+          "ditherScale": 4,
+          "ditherMatrix": 1
+        }
+      },
+      {
+        "pass": "temporal",
+        "params": {
+          "cell": 4
+        }
+      }
+    ]
+  },
+  {
+    "id": "gameboy",
+    "label": "Game Boy",
+    "passes": [
+      {
+        "pass": "pixelate",
+        "params": {
+          "pixelSize": 4
+        }
+      },
+      {
+        "pass": "palette",
+        "params": {
+          "palette": "gameboy",
+          "dither": 0.7,
+          "ditherScale": 4,
+          "mapping": 1,
+          "exposure": 1.0
+        }
+      },
+      {
+        "pass": "temporal",
+        "params": {
+          "cell": 4
+        }
+      }
+    ]
+  },
+  {
+    "id": "cga",
+    "label": "CGA 1984",
+    "passes": [
+      {
+        "pass": "pixelate",
+        "params": {
+          "pixelSize": 3
+        }
+      },
+      {
+        "pass": "palette",
+        "params": {
+          "palette": "cga",
+          "dither": 0.8,
+          "ditherScale": 3,
+          "mapping": 1,
+          "exposure": 1.0
+        }
+      },
+      {
+        "pass": "temporal",
+        "params": {
+          "cell": 3
+        }
+      }
+    ]
+  },
+  {
+    "id": "crt",
+    "label": "CRT TV / 显像管",
+    "passes": [
+      {
+        "pass": "pixelate",
+        "params": {
+          "pixelSize": 2
+        }
+      },
+      {
+        "pass": "crt"
+      }
+    ]
+  },
+  {
+    "id": "vhs",
+    "label": "VHS / 录像带",
+    "passes": [
+      {
+        "pass": "vhs"
+      },
+      {
+        "pass": "crt",
+        "params": {
+          "curvature": 0.15,
+          "scanlines": 0.35,
+          "mask": 0.15,
+          "lineHeight": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "oldphoto",
+    "label": "Old photo / 老照片",
+    "passes": [
+      {
+        "pass": "kuwahara",
+        "params": {
+          "radius": 1
+        }
+      },
+      {
+        "pass": "grade"
+      }
+    ]
+  }
+]
