@@ -136,8 +136,8 @@ class API_AVAILABLE(macos(12.3)) SckCapture final : public ScreenCapture {
         config.height = static_cast<size_t>(s.frame.size.height * s.backingScaleFactor);
     }
     if (config.width == 0) {
-      config.width = static_cast<size_t>(display.width * scale);
-      config.height = static_cast<size_t>(display.height * scale);
+      config.width = static_cast<size_t>(static_cast<CGFloat>(display.width) * scale);
+      config.height = static_cast<size_t>(static_cast<CGFloat>(display.height) * scale);
     }
     config.pixelFormat = kCVPixelFormatType_32BGRA;
     config.minimumFrameInterval = CMTimeMake(1, 60);

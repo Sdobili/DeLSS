@@ -15,9 +15,10 @@
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
+#include <windows.h>
+// windows.h must come first.
 #include <d3d11.h>
 #include <dxgi1_2.h>
-#include <windows.h>
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
