@@ -1142,16 +1142,21 @@ void main() {
     fragColor = vec4(cur, 1.0);
     return;
   }
-  vec2 motion = uHasMotion ? texture(uMotion, vUv).rg : vec2(0.0);
-  vec2 prevUv = vUv - motion;
-  if (any(lessThan(prevUv, vec2(0.0))) || any(greaterThan(prevUv, vec2(1.0)))) {
+  float cell = max(1.0, floor(u_cell + 0.5));
+  // Reproject by a whole number of blocks, read with texelFetch: history is
+  // never filtered, so a kept pixel is exactly a color the chain produced
+  // (bilinear taps would blend two palette colors into an off-palette one),
+  // and fat pixels stay on the screen-anchored grid while the camera moves.
+  vec2 blockCenter = (floor(gl_FragCoord.xy / cell) + 0.5) * cell;
+  vec2 motion = uHasMotion ? texture(uMotion, blockCenter / uResolution).rg * uResolution : vec2(0.0);
+  vec2 prev = gl_FragCoord.xy - floor(motion / cell + 0.5) * cell;
+  if (any(lessThan(prev, vec2(0.0))) || any(greaterThanEqual(prev, uResolution))) {
     fragColor = vec4(cur, 1.0);
     return;
   }
-  vec3 hist = texture(uHistory, prevUv).rgb;
+  vec3 hist = texelFetch(uHistory, ivec2(prev), 0).rgb;
   vec3 lo = cur;
   vec3 hi = cur;
-  float cell = max(1.0, floor(u_cell + 0.5));
   vec2 t = texel() * cell;
   for (int j = -1; j <= 1; ++j) {
     for (int i = -1; i <= 1; ++i) {
