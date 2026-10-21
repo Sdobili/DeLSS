@@ -242,10 +242,13 @@ void main() {
   vec3 c = src(suv).rgb;
   vec3 blur = (src(suv + vec2(texel().x * 2.0, 0.0)).rgb + src(suv - vec2(texel().x * 2.0, 0.0)).rgb) * 0.5;
   c = max(c, blur * u_glow);
-  // Gaussian beam profile across the line: bright lines are wider.
+  // Gaussian beam profile across the line: bright lines are wider. Dividing
+  // by the profile's mean over one line keeps average brightness unchanged,
+  // like turning up a real CRT's brightness to compensate for the gaps.
   float d = fract(line) - 0.5;
-  float beam = exp(-d * d / (0.06 + 0.1 * luma(c)));
-  c *= mix(1.0, beam * 1.25, u_scanlines);
+  float width = 0.06 + 0.1 * luma(c);
+  float beam = exp(-d * d / width) / min(1.0, sqrt(3.14159265 * width));
+  c *= mix(1.0, beam, u_scanlines);
   // Aperture grille: R, G, B stripes, one output pixel each.
   int stripe = int(mod(gl_FragCoord.x, 3.0));
   vec3 m = vec3(stripe == 0, stripe == 1, stripe == 2);
@@ -1139,16 +1142,21 @@ void main() {
     fragColor = vec4(cur, 1.0);
     return;
   }
-  vec2 motion = uHasMotion ? texture(uMotion, vUv).rg : vec2(0.0);
-  vec2 prevUv = vUv - motion;
-  if (any(lessThan(prevUv, vec2(0.0))) || any(greaterThan(prevUv, vec2(1.0)))) {
+  float cell = max(1.0, floor(u_cell + 0.5));
+  // Reproject by a whole number of blocks, read with texelFetch: history is
+  // never filtered, so a kept pixel is exactly a color the chain produced
+  // (bilinear taps would blend two palette colors into an off-palette one),
+  // and fat pixels stay on the screen-anchored grid while the camera moves.
+  vec2 blockCenter = (floor(gl_FragCoord.xy / cell) + 0.5) * cell;
+  vec2 motion = uHasMotion ? texture(uMotion, blockCenter / uResolution).rg * uResolution : vec2(0.0);
+  vec2 prev = gl_FragCoord.xy - floor(motion / cell + 0.5) * cell;
+  if (any(lessThan(prev, vec2(0.0))) || any(greaterThanEqual(prev, uResolution))) {
     fragColor = vec4(cur, 1.0);
     return;
   }
-  vec3 hist = texture(uHistory, prevUv).rgb;
+  vec3 hist = texelFetch(uHistory, ivec2(prev), 0).rgb;
   vec3 lo = cur;
   vec3 hi = cur;
-  float cell = max(1.0, floor(u_cell + 0.5));
   vec2 t = texel() * cell;
   for (int j = -1; j <= 1; ++j) {
     for (int i = -1; i <= 1; ++i) {
