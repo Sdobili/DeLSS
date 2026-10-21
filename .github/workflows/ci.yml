@@ -18,6 +18,8 @@ jobs:
       - run: pipx install ruff
       - name: Generated code is up to date
         run: python3 tools/gen.py --check
+      - name: Compositor shaders are up to date
+        run: python3 tools/compositor.py --check
       - run: npx eslint .
       - run: npx prettier --check .
       - run: ruff check tools && ruff format --check tools
