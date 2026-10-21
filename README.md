@@ -4,6 +4,10 @@
 
 **在线演示：<https://sdobili.github.io/DeLSS/>**（不依赖任何 CDN，国内可以直接打开）
 
+[![DeLSS 宣传片 / promo video](web/promo/poster.jpg)](https://sdobili.github.io/DeLSS/promo/delss-promo.mp4)
+
+> ▶ 宣传片 Promo video：<https://sdobili.github.io/DeLSS/>（纯属整活 · parody, not affiliated with NVIDIA）
+
 ![对比总览](docs/gallery/grid.jpg)
 
 ## 概念
