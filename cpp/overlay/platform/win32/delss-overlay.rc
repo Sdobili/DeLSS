@@ -1,0 +1,2 @@
+// App icon (Explorer, taskbar, tray). Resource id 1 is loaded by win32_tray.cpp.
+1 ICON "../../../../assets/icons/delss.ico"

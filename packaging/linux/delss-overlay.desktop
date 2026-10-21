@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=DeLSS Overlay
+GenericName=Screen stylizer
+Comment=Restyle everything on screen in real time (toggle with Ctrl+Alt+D)
+Exec=delss-overlay
+Icon=delss-overlay
+Terminal=false
+Categories=Graphics;Utility;

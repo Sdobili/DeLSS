@@ -59,6 +59,9 @@ class Platform {
   /// Human-readable notes printed at startup (e.g. a key combo already grabbed).
   [[nodiscard]] virtual std::vector<std::string> warnings() const { return {}; }
   [[nodiscard]] virtual std::string name() const = 0;
+  /// Tell the user something went wrong (stderr everywhere; a dialog where
+  /// apps are launched without a terminal, i.e. macOS).
+  virtual void reportError(const std::string& message);
 };
 
 std::unique_ptr<Platform> createPlatform();
