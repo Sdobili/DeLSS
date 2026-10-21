@@ -19,7 +19,7 @@ S = 1024
 
 
 def lerp(a: tuple[int, ...], b: tuple[int, ...], t: float) -> tuple[int, ...]:
-    return tuple(round(x + (y - x) * t) for x, y in zip(a, b))
+    return tuple(round(x + (y - x) * t) for x, y in zip(a, b, strict=True))
 
 
 def scene(size: int) -> Image.Image:
@@ -40,7 +40,9 @@ def scene(size: int) -> Image.Image:
         pts = [(0, size)]
         for i in range(65):
             x = i / 64 * size
-            y = base + amp * (math.sin(x / size * freq + phase) + 0.5 * math.sin(x / size * freq * 2.7 + phase))
+            y = base + amp * (
+                math.sin(x / size * freq + phase) + 0.5 * math.sin(x / size * freq * 2.7 + phase)
+            )
             pts.append((x, y))
         pts.append((size, size))
         d.polygon(pts, fill=color)
@@ -84,7 +86,9 @@ def app_icon() -> Image.Image:
     icon = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     shadow = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     ImageDraw.Draw(shadow).rounded_rectangle(
-        [margin, margin + S * 0.015, S - margin, S - margin + S * 0.015], radius=inner * 0.225, fill=(0, 0, 0, 110)
+        [margin, margin + S * 0.015, S - margin, S - margin + S * 0.015],
+        radius=inner * 0.225,
+        fill=(0, 0, 0, 110),
     )
     icon.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(S * 0.012)))
     icon.paste(art, (int(margin), int(margin)), rmask)
@@ -120,8 +124,13 @@ def template_icon(pt: int, scale: int) -> Image.Image:
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     icon = app_icon()
-    icon.save(OUT / "AppIcon.icns", sizes=[(16, 16), (32, 32), (64, 64), (128, 128), (256, 256), (512, 512), (1024, 1024)])
-    icon.save(OUT / "delss.ico", sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
+    icon.save(
+        OUT / "AppIcon.icns",
+        sizes=[(16, 16), (32, 32), (64, 64), (128, 128), (256, 256), (512, 512), (1024, 1024)],
+    )
+    icon.save(
+        OUT / "delss.ico", sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)]
+    )
     for n in (16, 32, 48, 64, 128, 256, 512):
         icon.resize((n, n), Image.LANCZOS).save(OUT / f"delss-{n}.png")
     template_icon(18, 1).save(OUT / "MenuBarTemplate.png")
