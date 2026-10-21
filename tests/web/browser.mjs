@@ -51,26 +51,43 @@ export function readPng(path) {
 
 /**
  * Compare two RGBA images. Golden tests allow tiny rounding differences
- * between GPU implementations but nothing a person could see.
+ * between GPU implementations but nothing a person could see. A pixel only
+ * counts as bad if no pixel in the reference's 3x3 neighborhood matches it:
+ * bilinear filtering precision differs between GL implementations, which can
+ * shift a thresholded edge (an ink line) by one pixel.
  */
 export function compare(a, b) {
   if (a.width !== b.width || a.height !== b.height) {
     return { ok: false, reason: `size ${a.width}x${a.height} != ${b.width}x${b.height}` };
   }
+  const { width: w, height: h } = a;
+  const diffAt = (i, j) => {
+    let px = 0;
+    for (let c = 0; c < 3; ++c) px = Math.max(px, Math.abs(a.data[i * 4 + c] - b.data[j * 4 + c]));
+    return px;
+  };
   let sum = 0;
   let bad = 0;
   let max = 0;
-  const n = a.width * a.height;
-  for (let i = 0; i < n; ++i) {
-    let px = 0;
-    for (let c = 0; c < 3; ++c) {
-      const d = Math.abs(a.data[i * 4 + c] - b.data[i * 4 + c]);
-      sum += d;
-      px = Math.max(px, d);
+  for (let y = 0; y < h; ++y) {
+    for (let x = 0; x < w; ++x) {
+      const i = y * w + x;
+      for (let c = 0; c < 3; ++c) sum += Math.abs(a.data[i * 4 + c] - b.data[i * 4 + c]);
+      const px = diffAt(i, i);
+      max = Math.max(max, px);
+      if (px <= 16) continue;
+      let best = px;
+      for (let dy = -1; dy <= 1 && best > 16; ++dy) {
+        for (let dx = -1; dx <= 1 && best > 16; ++dx) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx >= 0 && ny >= 0 && nx < w && ny < h) best = Math.min(best, diffAt(i, ny * w + nx));
+        }
+      }
+      if (best > 16) bad += 1;
     }
-    max = Math.max(max, px);
-    if (px > 16) bad += 1;
   }
+  const n = w * h;
   const mean = sum / (n * 3);
   const badRatio = bad / n;
   const ok = mean < 1.0 && badRatio < 0.005;

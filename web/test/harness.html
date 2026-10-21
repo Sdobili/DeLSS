@@ -9,7 +9,6 @@
   const canvas = document.getElementById('c');
   const gl = canvas.getContext('webgl2', { preserveDrawingBuffer: true, antialias: false });
   if (!gl) throw new Error('WebGL2 unavailable');
-  const delss = new DeLSS(gl);
 
   async function texture(url) {
     const img = new Image();
@@ -48,6 +47,9 @@
    */
   window.runChain = async ({ chain, frames }) => {
     const outputs = [];
+    // Fresh pipeline per run: frame counter and history start at 0, so a
+    // golden never depends on which test ran before it.
+    const delss = new DeLSS(gl);
     delss.setChain(chain);
     for (const f of frames) {
       const color = await texture(f.color);
@@ -59,6 +61,7 @@
       outputs.push(read(color.width, color.height));
       for (const t of [color.tex, depth, normal]) if (t) gl.deleteTexture(t);
     }
+    delss.dispose();
     return { width: canvas.width, height: canvas.height, outputs, renderer: rendererName() };
   };
 
