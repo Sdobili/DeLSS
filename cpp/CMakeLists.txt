@@ -90,6 +90,10 @@ if(DELSS_BUILD_TOOLS)
   add_test(NAME cli_list COMMAND delss-cli --list)
   add_executable(delss-imgdiff apps/imgdiff.cpp)
   target_link_libraries(delss-imgdiff PRIVATE delss_headless)
+  add_executable(delss_compositor_test tests/compositor_test.cpp)
+  target_link_libraries(delss_compositor_test PRIVATE delss_headless)
+  target_compile_definitions(delss_compositor_test PRIVATE DELSS_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/..")
+  add_test(NAME compositor_shaders COMMAND delss_compositor_test)
 
   # The desktop-GL path that Windows and macOS use, exercised on Mesa's desktop
   # GL 3.3 core profile: proves the shader translation matches the goldens.

@@ -171,6 +171,55 @@ cmake -S cpp -B build -G Ninja && cmake --build build
 2. 在 `shaders/passes.json` 里登记参数的默认值和范围。演示页的调参面板会自动生成。
 3. 运行 `python3 tools/gen.py`，再运行 `npm run golden:update`，然后检查新增的金图。
 
+## 全屏滤镜 delss-overlay
+
+不用接入任何游戏：打开 `delss-overlay`，按 **Ctrl+Alt+D**，当前屏幕上的所有内容都会被实时风格化，不管底下是什么应用。
+
+![X11 下运行的 delss-overlay](docs/overlay-x11.png)
+
+原理：抓屏（排除自己的窗口，避免回授）→ 同一套 DeLSS 着色器 → 画到每个显示器上一个置顶、无边框、鼠标穿透的全屏窗口。
+
+| 系统 | 抓屏 | 覆盖窗口 | 热键 | 托盘 |
+| --- | --- | --- | --- | --- |
+| Windows 10 2004+ | DXGI 桌面复制 | `WS_EX_LAYERED \| TRANSPARENT \| TOPMOST` + `WDA_EXCLUDEFROMCAPTURE` | GetAsyncKeyState | 通知区图标 |
+| macOS 12.3+ | ScreenCaptureKit（过滤器排除自己的窗口） | `NSScreenSaverWindowLevel` + `ignoresMouseEvents` | Carbon 热键（Ctrl+Option） | 菜单栏 |
+| Linux X11 | XComposite（逐个叠顶层窗口，跳过自己） | override-redirect + 空 XShape 输入区 | XGrabKey | AppIndicator |
+| Linux Wayland | 不支持全局抓屏，改用合成器着色器（见下） | — | — | — |
+
+### 安装和使用
+
+从 [Actions 的 Overlay 工作流](https://github.com/Sdobili/DeLSS/actions/workflows/overlay.yml) 下载对应系统的构建产物，或自己编译：
+
+```bash
+cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release -DDELSS_BUILD_OVERLAY=ON
+cmake --build build --config Release
+```
+
+- **Windows**：直接运行 `delss-overlay.exe`，不需要任何权限。
+- **macOS**：打开 `DeLSS Overlay.app`（未公证，首次需右键→打开）。第一次会请求“屏幕录制”权限：系统设置 → 隐私与安全性 → 屏幕录制，勾选后重启应用。没有权限时滤镜会在 3 秒后自动隐藏。
+- **Linux X11**：运行 `delss-overlay`，需要 Composite 扩展（几乎所有 X 服务器都有）。Linux 依赖：`libxcomposite libxext`，托盘可选 `libayatana-appindicator3`。
+- **Linux Wayland**：Wayland 不允许普通程序抓全屏或盖在所有窗口上。xdg-desktop-portal ScreenCast + PipeWire 这条路这一版没做（每次都要弹门户授权，而且盖在上面的窗口仍然没法置顶穿透）。目前的办法是用合成器自带的屏幕着色器：`compositor/hyprland/delss-<风格>.frag` 由 `tools/compositor.py` 从同一份着色器生成，在 `hyprland.conf` 里写 `decoration:screen_shader = /路径/delss-cel.frag`。只支持 Hyprland；GNOME、KDE 的 Wayland 会话目前不支持，可以切到 X11 会话。
+
+热键（macOS 上 Alt 是 Option）：
+
+| 按键 | 作用 |
+| --- | --- |
+| Ctrl+Alt+D | 开 / 关 |
+| Ctrl+Alt+P / O | 下一个 / 上一个风格 |
+| Ctrl+Alt+↑ / ↓ | 强度 ±10% |
+| Ctrl+Alt+H | 显示 / 隐藏左上角每帧耗时 HUD |
+| **Ctrl+Alt+Esc** 或 Ctrl+Alt+Q | 安全退出 |
+
+覆盖窗口永远是鼠标穿透的，不会挡住任何点击；抓屏连续失败 3 秒会自动隐藏。托盘菜单里可以选风格、强度、显示器和 HUD。设置自动保存在 `%APPDATA%\DeLSS\overlay.ini`、`~/Library/Application Support/DeLSS/overlay.ini` 或 `~/.config/delss/overlay.ini`。命令行参数见 `delss-overlay --help`。
+
+### 画质取舍
+
+抓屏只拿得到颜色，没有深度、法线和运动向量，所以：描边改用亮度边缘检测，复杂纹理处会多出杂线；时间稳定只能用上一帧结果混合，镜头快速移动时比引擎接入版更容易拖影或闪烁。另外抓屏要先拷到 CPU 再上传，4K 下开销明显。想要最好的效果，还是用 C++ 库或 WebGL 版本接入渲染管线。
+
+### 反作弊
+
+delss-overlay 不注入游戏进程，也不读写游戏内存，只是抓屏再盖一个窗口，和录屏、直播软件是同一类做法，一般是安全的。但各家反作弊规则不同，在线竞技游戏请自行斟酌。部分**独占全屏**的游戏会绕过覆盖窗口（直接看不到滤镜），请把游戏改成**无边框窗口**模式。
+
 ## 开发和测试
 
 ```bash
