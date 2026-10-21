@@ -3,7 +3,6 @@
 import { DeLSS, PALETTES, PASSES, PRESETS, presetChain } from '../src/delss.js';
 import { GBufferScene } from './scene.js';
 
-const MAX_WIDTH = 1280;
 const $ = (id) => document.getElementById(id);
 
 const canvas = $('canvas');
@@ -26,6 +25,7 @@ const SOURCES = [
 ];
 
 const state = {
+  maxWidth: 1280,
   source: /** @type {any} */ (null),
   presetId: 'cel',
   split: 0.5,
@@ -53,10 +53,10 @@ function createColorTexture() {
   return tex;
 }
 
-/** Upload an image/video/canvas, downscaled so the canvas stays <= MAX_WIDTH. */
+/** Upload an image/video/canvas, downscaled so the canvas stays <= state.maxWidth. */
 const staging = document.createElement('canvas');
 function upload(el, w, h) {
-  const scale = Math.min(1, MAX_WIDTH / w);
+  const scale = Math.min(1, state.maxWidth / w);
   state.width = Math.round(w * scale);
   state.height = Math.round(h * scale);
   let pixels = el;
@@ -114,8 +114,8 @@ async function selectSource(source) {
     } else if (source.kind === 'video') {
       await playVideo((v) => (v.src = source.url));
     } else {
-      state.width = 1280;
-      state.height = 720;
+      state.width = state.maxWidth;
+      state.height = Math.round((state.maxWidth * 9) / 16);
     }
   } catch (err) {
     console.error(err);
@@ -368,6 +368,12 @@ const hash = new URLSearchParams(location.hash.slice(1));
 const initialPreset = PRESETS.some((p) => p.id === hash.get('preset')) ? hash.get('preset') : 'cel';
 const initialSource = SOURCES.find((s) => s.id === hash.get('source')) ?? SOURCES[1];
 if (hash.has('split')) state.split = Number(hash.get('split'));
+if (hash.has('width')) state.maxWidth = Math.max(160, Number(hash.get('width')) || 1280);
+$('resolution').value = String(state.maxWidth);
+$('resolution').onchange = (e) => {
+  state.maxWidth = Number(e.target.value);
+  selectSource(state.source);
+};
 $('split').value = String(state.split);
 selectPreset(initialPreset);
 await selectSource(initialSource);

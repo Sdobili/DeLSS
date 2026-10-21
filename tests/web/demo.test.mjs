@@ -27,7 +27,8 @@ for (const source of ['scene', 'knight']) {
     const errors = [];
     page.on('pageerror', (e) => errors.push(String(e)));
     page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
-    await page.goto(`${server.url}/#source=${source}`);
+    // Small render size: CI runners rasterize WebGL on the CPU.
+    await page.goto(`${server.url}/#source=${source}&width=320`);
     await page.waitForFunction(() => window.__delss?.ready);
     for (const preset of PRESETS) {
       await page.click(`#presets button[data-id="${preset.id}"]`);
