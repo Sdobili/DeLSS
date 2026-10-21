@@ -10,7 +10,7 @@ export default [
   },
   {
     files: ['tools/**/*.mjs', 'tests/**/*.mjs', 'eslint.config.js'],
-    languageOptions: { globals: { ...globals.node, window: 'readonly' } },
+    languageOptions: { globals: { ...globals.node, window: 'readonly', document: 'readonly' } },
   },
   {
     rules: {

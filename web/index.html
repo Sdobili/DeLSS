@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DeLSS · 反向 DLSS 实时风格化</title>
+    <meta
+      name="description"
+      content="DeLSS: real-time post-processing that turns photoreal frames into cel, pixel art, PS1, Game Boy, CRT/VHS and comic styles."
+    />
+    <link rel="stylesheet" href="demo/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>DeLSS <small>反向 DLSS · 把写实画面实时“降维”</small></h1>
+      <nav>
+        <a href="https://github.com/Sdobili/DeLSS">GitHub</a>
+      </nav>
+    </header>
+    <main>
+      <section class="stage">
+        <div class="viewport" id="viewport">
+          <canvas id="canvas"></canvas>
+          <div class="split-line" id="splitLine"><span>原图 ◀ ▶ DeLSS</span></div>
+          <div class="hud" id="hud">–</div>
+          <div class="drop-hint" id="dropHint">松开以加载图片或视频</div>
+        </div>
+        <div class="presets" id="presets"></div>
+      </section>
+      <aside class="panel">
+        <h2>输入 Input</h2>
+        <div class="sources" id="sources"></div>
+        <label class="file">
+          上传图片 / 视频
+          <input type="file" id="file" accept="image/*,video/*" />
+        </label>
+        <div class="gbuffer" id="gbuffer">
+          <h3>G-buffer（仅 3D 场景）</h3>
+          <label><input type="checkbox" id="useDepth" checked /> depth 深度</label>
+          <label><input type="checkbox" id="useNormal" checked /> normal 法线</label>
+          <label><input type="checkbox" id="useMotion" checked /> motion 运动向量</label>
+          <label><input type="checkbox" id="animate" checked /> 播放动画</label>
+        </div>
+        <label class="row">
+          渲染宽度 Resolution
+          <select id="resolution">
+            <option value="1920">1920</option>
+            <option value="1280">1280</option>
+            <option value="960">960</option>
+            <option value="640">640</option>
+            <option value="320">320</option>
+          </select>
+        </label>
+        <label class="row">
+          对比线 Split
+          <input type="range" id="split" min="0" max="1" step="0.001" value="0.5" />
+        </label>
+        <h2>Pass 链 <small>可逐项调参</small></h2>
+        <div id="chain"></div>
+      </aside>
+    </main>
+    <footer>
+      着色器只有一份（GLSL ES 3.00），同时驱动这个 WebGL2 演示和 C++ / OpenGL ES 参考库。示例素材均为自生成。
+    </footer>
+    <script type="module" src="demo/app.js"></script>
+  </body>
+</html>

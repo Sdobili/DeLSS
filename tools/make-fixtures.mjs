@@ -2,6 +2,7 @@
 // and the demo scene's G-buffer (depth/normal edge path). Fixtures are
 // committed so the WebGL and C++ tests consume byte-identical inputs.
 import { execFileSync } from 'node:child_process';
+import { mkdirSync } from 'node:fs';
 import { decodeBase64Rgba, openHarness, ROOT, writePng } from '../tests/web/browser.mjs';
 
 const W = 320;
@@ -15,9 +16,16 @@ execFileSync('python3', [
 ]);
 
 const h = await openHarness();
-const scene = await h.page.evaluate((a) => window.dumpScene(a), { time: 1.0, width: W, height: H });
-for (const [name, b64] of Object.entries(scene)) {
-  writePng(`${out}/scene_${name}.png`, decodeBase64Rgba(b64, W, H));
+// Low-res copy for tests, high-res copy for the README gallery (tools/gallery.py).
+for (const [dir, w, ht] of [
+  [out, W, H],
+  [`${ROOT}/docs/gallery/input`, 960, 540],
+]) {
+  mkdirSync(dir, { recursive: true });
+  const scene = await h.page.evaluate((a) => window.dumpScene(a), { time: 1.0, width: w, height: ht });
+  for (const [name, b64] of Object.entries(scene)) {
+    writePng(`${dir}/scene_${name}.png`, decodeBase64Rgba(b64, w, ht));
+  }
 }
 await h.close();
 if (h.errors.length) throw h.errors[0];
