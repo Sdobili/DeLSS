@@ -35,7 +35,7 @@ GLuint compile(GLenum type, std::string_view source, std::string_view label) {
   glGetShaderiv(shader, GL_COMPILE_STATUS, &ok);
   if (ok != GL_TRUE) {
     std::array<char, 4096> log{};
-    glGetShaderInfoLog(shader, log.size(), nullptr, log.data());
+    glGetShaderInfoLog(shader, static_cast<GLsizei>(log.size()), nullptr, log.data());
     glDeleteShader(shader);
     throw std::runtime_error("DeLSS: " + std::string(label) + " failed to compile:\n" + log.data());
   }
@@ -209,7 +209,7 @@ struct Pipeline::Impl {
     glGetProgramiv(p.id, GL_LINK_STATUS, &ok);
     if (ok != GL_TRUE) {
       std::array<char, 4096> log{};
-      glGetProgramInfoLog(p.id, log.size(), nullptr, log.data());
+      glGetProgramInfoLog(p.id, static_cast<GLsizei>(log.size()), nullptr, log.data());
       glDeleteProgram(p.id);
       throw std::runtime_error("DeLSS: " + name + " failed to link:\n" + log.data());
     }
@@ -219,7 +219,8 @@ struct Pipeline::Impl {
       std::array<char, 256> buf{};
       GLint size = 0;
       GLenum type = 0;
-      glGetActiveUniform(p.id, static_cast<GLuint>(i), buf.size(), nullptr, &size, &type, buf.data());
+      glGetActiveUniform(p.id, static_cast<GLuint>(i), static_cast<GLsizei>(buf.size()), nullptr, &size,
+                         &type, buf.data());
       std::string uname(buf.data());
       const GLint loc = glGetUniformLocation(p.id, uname.c_str());
       if (const auto bracket = uname.find('['); bracket != std::string::npos) uname.resize(bracket);

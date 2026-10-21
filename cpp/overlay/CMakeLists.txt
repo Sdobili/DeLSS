@@ -32,18 +32,21 @@ target_include_directories(delss-overlay SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_D
 target_compile_options(delss-overlay PRIVATE ${DELSS_WARNINGS})
 
 if(WIN32)
-  target_sources(delss-overlay PRIVATE platform/win32/win32_platform.cpp platform/win32/win32_tray.cpp
-                                       platform/win32/delss-overlay.rc)
+  target_sources(delss-overlay PRIVATE platform/win32/win32_platform.cpp platform/win32/win32_tray.cpp)
   target_link_libraries(delss-overlay PRIVATE d3d11 dxgi user32 shell32)
   set_target_properties(delss-overlay PROPERTIES WIN32_EXECUTABLE OFF)
 elseif(APPLE)
-  enable_language(OBJCXX)
   target_sources(delss-overlay PRIVATE platform/macos/macos_platform.mm platform/macos/macos_tray.mm)
   set_source_files_properties(platform/macos/macos_platform.mm platform/macos/macos_tray.mm PROPERTIES COMPILE_FLAGS
                                                                                                      "-fobjc-arc")
   target_link_libraries(
     delss-overlay PRIVATE "-framework Cocoa" "-framework ScreenCaptureKit" "-framework CoreMedia"
                           "-framework CoreVideo" "-framework Carbon")
+  # A real .app bundle: macOS ties the Screen Recording permission to it, and
+  # LSUIElement keeps the overlay out of the Dock (menu-bar item only).
+  set_target_properties(
+    delss-overlay PROPERTIES MACOSX_BUNDLE TRUE OUTPUT_NAME "DeLSS Overlay"
+                             MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/platform/macos/Info.plist.in)
 else()
   find_package(X11 REQUIRED)
   if(NOT X11_Xcomposite_FOUND OR NOT X11_Xshape_FOUND)
@@ -65,7 +68,7 @@ else()
   endif()
 endif()
 
-install(TARGETS delss-overlay RUNTIME DESTINATION bin)
+install(TARGETS delss-overlay RUNTIME DESTINATION bin BUNDLE DESTINATION .)
 
 # X11 end-to-end test (Linux only): Xvfb + Mesa llvmpipe, see tests/x11/e2e.sh.
 if(NOT WIN32 AND NOT APPLE)
