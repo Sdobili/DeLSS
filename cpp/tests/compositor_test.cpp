@@ -50,9 +50,8 @@ int main() {
     fs::create_directories("compositor-out");  // relative to the ctest build dir
     for (const auto& preset : delss::presets()) {
       const std::string id(preset.id);
-      std::ifstream in(root / "compositor/hyprland" / ("delss-" + id + ".frag"));
       std::stringstream buf;
-      buf << in.rdbuf();
+      buf << std::ifstream(root / "compositor/hyprland" / ("delss-" + id + ".frag")).rdbuf();
       std::string text = buf.str();
       const std::string from = "in vec2 v_texcoord;";
       text.replace(text.find(from), from.size(), "in vec2 vUv;\n#define v_texcoord vUv");
