@@ -17,6 +17,24 @@
 
 namespace delss::headless {
 
+namespace {
+#if defined(DELSS_GL_DESKTOP)
+constexpr EGLint kRenderable = EGL_OPENGL_BIT;
+constexpr EGLenum kApi = EGL_OPENGL_API;
+const std::array<EGLint, 7> kContextAttribs{EGL_CONTEXT_MAJOR_VERSION,
+                                            3,
+                                            EGL_CONTEXT_MINOR_VERSION,
+                                            3,
+                                            EGL_CONTEXT_OPENGL_PROFILE_MASK,
+                                            EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT,
+                                            EGL_NONE};
+#else
+constexpr EGLint kRenderable = EGL_OPENGL_ES3_BIT;
+constexpr EGLenum kApi = EGL_OPENGL_ES_API;
+const std::array<EGLint, 3> kContextAttribs{EGL_CONTEXT_MAJOR_VERSION, 3, EGL_NONE};
+#endif
+}  // namespace
+
 EglContext::EglContext() {
   // Prefer the surfaceless platform (no X/Wayland needed); fall back to the
   // default display for drivers without it.
@@ -29,23 +47,27 @@ EglContext::EglContext() {
   if (display_ == EGL_NO_DISPLAY || eglInitialize(display_, nullptr, nullptr) != EGL_TRUE) {
     throw std::runtime_error("EGL: no display");
   }
-  const std::array<EGLint, 5> configAttribs{EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT, EGL_SURFACE_TYPE,
+  const std::array<EGLint, 5> configAttribs{EGL_RENDERABLE_TYPE, kRenderable, EGL_SURFACE_TYPE,
                                             EGL_PBUFFER_BIT, EGL_NONE};
   EGLConfig config = nullptr;
   EGLint count = 0;
   if (eglChooseConfig(display_, configAttribs.data(), &config, 1, &count) != EGL_TRUE || count == 0) {
     // Surfaceless displays may expose configs without pbuffer support.
-    const std::array<EGLint, 3> esOnly{EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT, EGL_NONE};
+    const std::array<EGLint, 3> esOnly{EGL_RENDERABLE_TYPE, kRenderable, EGL_NONE};
     if (eglChooseConfig(display_, esOnly.data(), &config, 1, &count) != EGL_TRUE || count == 0) {
       throw std::runtime_error("EGL: no ES3 config");
     }
   }
-  eglBindAPI(EGL_OPENGL_ES_API);
-  const std::array<EGLint, 3> contextAttribs{EGL_CONTEXT_MAJOR_VERSION, 3, EGL_NONE};
-  context_ = eglCreateContext(display_, config, EGL_NO_CONTEXT, contextAttribs.data());
-  if (context_ == EGL_NO_CONTEXT) throw std::runtime_error("EGL: cannot create ES 3.0 context");
+  eglBindAPI(kApi);
+  context_ = eglCreateContext(display_, config, EGL_NO_CONTEXT, kContextAttribs.data());
+  if (context_ == EGL_NO_CONTEXT) throw std::runtime_error("EGL: cannot create a GL context");
   if (eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, context_) != EGL_TRUE) {
     throw std::runtime_error("EGL: eglMakeCurrent failed (needs EGL_KHR_surfaceless_context)");
+  }
+  std::string missing;
+  if (!gl::load([](const char* name) { return reinterpret_cast<void*>(eglGetProcAddress(name)); },
+                &missing)) {
+    throw std::runtime_error("GL: missing entry point " + missing);
   }
 }
 
@@ -55,7 +77,10 @@ EglContext::~EglContext() {
   eglTerminate(display_);
 }
 
-std::string EglContext::renderer() const { return reinterpret_cast<const char*>(glGetString(GL_RENDERER)); }
+std::string EglContext::renderer() const {
+  return std::string(reinterpret_cast<const char*>(glGetString(GL_RENDERER))) + " / " +
+         reinterpret_cast<const char*>(glGetString(GL_VERSION));
+}
 
 Image loadPng(const std::string& path) {
   Image img;
@@ -104,7 +129,7 @@ Canvas createCanvas(int width, int height) {
   Canvas c{0, 0, width, height};
   glGenTextures(1, &c.texture);
   glBindTexture(GL_TEXTURE_2D, c.texture);
-  glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
   glGenFramebuffers(1, &c.framebuffer);
   glBindFramebuffer(GL_FRAMEBUFFER, c.framebuffer);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, c.texture, 0);

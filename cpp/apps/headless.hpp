@@ -1,14 +1,15 @@
 // Headless helpers shared by the CLI and the tests: an offscreen OpenGL ES 3.0
-// context through EGL (Mesa llvmpipe works without a GPU or display) and PNG
-// load/save that converts between top-down images and bottom-up GL textures.
+// context (or desktop GL 3.3 core when built with DELSS_GL_DESKTOP) through EGL (Mesa llvmpipe works without
+// a GPU or display) and PNG load/save that converts between top-down images and bottom-up GL textures.
 #pragma once
 
 #include <EGL/egl.h>
-#include <GLES3/gl3.h>
 
 #include <cstdint>
 #include <string>
 #include <vector>
+
+#include "delss/gl.hpp"
 
 namespace delss::headless {
 

@@ -1,0 +1,54 @@
+// X-macro list of every GL entry point DeLSS and delss-overlay call.
+// Desktop builds load these at runtime (see gl.hpp); keep the list minimal.
+// clang-format off
+#define DELSS_GL_FUNCS(X) \
+  X(glActiveTexture, PFNGLACTIVETEXTUREPROC) \
+  X(glAttachShader, PFNGLATTACHSHADERPROC) \
+  X(glBindFramebuffer, PFNGLBINDFRAMEBUFFERPROC) \
+  X(glBindTexture, PFNGLBINDTEXTUREPROC) \
+  X(glBindVertexArray, PFNGLBINDVERTEXARRAYPROC) \
+  X(glBlitFramebuffer, PFNGLBLITFRAMEBUFFERPROC) \
+  X(glCompileShader, PFNGLCOMPILESHADERPROC) \
+  X(glCreateProgram, PFNGLCREATEPROGRAMPROC) \
+  X(glCreateShader, PFNGLCREATESHADERPROC) \
+  X(glDeleteFramebuffers, PFNGLDELETEFRAMEBUFFERSPROC) \
+  X(glDeleteProgram, PFNGLDELETEPROGRAMPROC) \
+  X(glDeleteShader, PFNGLDELETESHADERPROC) \
+  X(glDeleteTextures, PFNGLDELETETEXTURESPROC) \
+  X(glDeleteVertexArrays, PFNGLDELETEVERTEXARRAYSPROC) \
+  X(glDisable, PFNGLDISABLEPROC) \
+  X(glEnable, PFNGLENABLEPROC) \
+  X(glDrawArrays, PFNGLDRAWARRAYSPROC) \
+  X(glFramebufferTexture2D, PFNGLFRAMEBUFFERTEXTURE2DPROC) \
+  X(glGenFramebuffers, PFNGLGENFRAMEBUFFERSPROC) \
+  X(glGenTextures, PFNGLGENTEXTURESPROC) \
+  X(glGenVertexArrays, PFNGLGENVERTEXARRAYSPROC) \
+  X(glGetActiveUniform, PFNGLGETACTIVEUNIFORMPROC) \
+  X(glGetProgramInfoLog, PFNGLGETPROGRAMINFOLOGPROC) \
+  X(glGetProgramiv, PFNGLGETPROGRAMIVPROC) \
+  X(glGetShaderInfoLog, PFNGLGETSHADERINFOLOGPROC) \
+  X(glGetShaderiv, PFNGLGETSHADERIVPROC) \
+  X(glGetUniformLocation, PFNGLGETUNIFORMLOCATIONPROC) \
+  X(glLinkProgram, PFNGLLINKPROGRAMPROC) \
+  X(glShaderSource, PFNGLSHADERSOURCEPROC) \
+  X(glTexImage2D, PFNGLTEXIMAGE2DPROC) \
+  X(glTexSubImage2D, PFNGLTEXSUBIMAGE2DPROC) \
+  X(glTexParameteri, PFNGLTEXPARAMETERIPROC) \
+  X(glUniform1f, PFNGLUNIFORM1FPROC) \
+  X(glUniform1i, PFNGLUNIFORM1IPROC) \
+  X(glUniform2f, PFNGLUNIFORM2FPROC) \
+  X(glUniform3fv, PFNGLUNIFORM3FVPROC) \
+  X(glUseProgram, PFNGLUSEPROGRAMPROC) \
+  X(glViewport, PFNGLVIEWPORTPROC) \
+  X(glReadPixels, PFNGLREADPIXELSPROC) \
+  X(glPixelStorei, PFNGLPIXELSTOREIPROC) \
+  X(glClear, PFNGLCLEARPROC) \
+  X(glClearColor, PFNGLCLEARCOLORPROC) \
+  X(glGetString, PFNGLGETSTRINGPROC) \
+  X(glGetError, PFNGLGETERRORPROC) \
+  X(glFinish, PFNGLFINISHPROC) \
+  X(glFlush, PFNGLFLUSHPROC) \
+  X(glScissor, PFNGLSCISSORPROC) \
+  X(glBlendFunc, PFNGLBLENDFUNCPROC) \
+
+// clang-format on
