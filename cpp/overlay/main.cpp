@@ -173,7 +173,13 @@ int selftest(ov::Platform& platform) {
   glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
   platform.windowHints();
   GLFWwindow* window = glfwCreateWindow(64, 64, "delss-overlay selftest", nullptr, nullptr);
-  if (window == nullptr) throw std::runtime_error("selftest: cannot create a GL context");
+  if (window == nullptr) {
+    // Distinct exit code: the binary, frameworks and GLFW all loaded fine, but
+    // this machine offers no OpenGL (e.g. GPU-less CI virtual machines).
+    std::printf("delss-overlay %s selftest: started OK, but no OpenGL context is available here\n",
+                DELSS_VERSION);
+    return 3;
+  }
   glfwMakeContextCurrent(window);
   std::string missing;
   if (!delss::gl::load(loadProc, &missing))

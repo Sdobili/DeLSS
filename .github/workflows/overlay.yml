@@ -74,7 +74,9 @@ jobs:
           APP="/tmp/smoke/DeLSS Overlay.app"
           codesign --verify --deep --strict "$APP"
           "$APP/Contents/MacOS/DeLSS Overlay" --version
-          arch -arm64 "$APP/Contents/MacOS/DeLSS Overlay" --selftest
+          # Exit 3 = started fine but the VM has no OpenGL (GitHub macOS runners); anything else fails.
+          rc=0; arch -arm64 "$APP/Contents/MacOS/DeLSS Overlay" --selftest || rc=$?
+          [ "$rc" = 0 ] || [ "$rc" = 3 ]
           arch -x86_64 "$APP/Contents/MacOS/DeLSS Overlay" --version   # Rosetta slice starts too
           # Launch like a double-click (LaunchServices) and check it stays up.
           printf 'start_enabled = false\n' > /tmp/smoke.ini
