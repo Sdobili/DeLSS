@@ -35,7 +35,16 @@ class MacTray final : public Tray {
  public:
   MacTray() {
     item_ = [[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];
-    item_.button.title = @"DeLSS";
+    // Monochrome template image: macOS tints it for light/dark menu bars.
+    NSImage* image = [NSImage imageNamed:@"MenuBarTemplate"];
+    if (image != nil) {
+      image.template = YES;
+      image.size = NSMakeSize(18, 18);
+      item_.button.image = image;
+    } else {
+      item_.button.title = @"DeLSS";
+    }
+    item_.button.toolTip = @"DeLSS Overlay";
     target_ = [[DelssTrayTarget alloc] init];
     target_.queue = &queue_;
   }
@@ -69,7 +78,7 @@ class MacTray final : public Tray {
     [menu addItem:[NSMenuItem separatorItem]];
     add(menu, "Quit  (⌃⌥Esc)", false, {Action::Exit});
     item_.menu = menu;
-    item_.button.title = m.enabled ? @"DeLSS ●" : @"DeLSS";
+    item_.button.appearsDisabled = !m.enabled;  // dimmed icon while the filter is off
   }
 
   void poll(std::vector<Command>& out) override {

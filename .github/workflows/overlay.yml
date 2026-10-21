@@ -18,7 +18,7 @@ jobs:
           - os: windows-latest
             artifact: delss-overlay-windows-x64
           - os: macos-latest
-            artifact: delss-overlay-macos-arm64
+            artifact: delss-overlay-macos-universal
           - os: ubuntu-latest
             artifact: delss-overlay-linux-x64
     runs-on: ${{ matrix.os }}
@@ -32,7 +32,12 @@ jobs:
             libx11-dev libxcomposite-dev libxext-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
             libayatana-appindicator3-dev
       - name: Configure
-        run: cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release -DDELSS_BUILD_OVERLAY=ON -DDELSS_BUILD_TOOLS=OFF
+        shell: bash
+        run: |
+          extra=""
+          # One universal binary for Apple silicon and Intel Macs.
+          if [ "$RUNNER_OS" = "macOS" ]; then extra='-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64'; fi
+          cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release -DDELSS_BUILD_OVERLAY=ON -DDELSS_BUILD_TOOLS=OFF "$extra"
       - name: Build
         run: cmake --build build --config Release --parallel
       - name: Unit tests (hotkey state machine, settings, capture-to-texture conversion, HUD)
@@ -42,17 +47,47 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist && cp build/overlay/Release/delss-overlay.exe dist/
+          ./dist/delss-overlay.exe --version
           cp LICENSE dist/
       - name: Package (macOS)
         if: runner.os == 'macOS'
         run: |
-          mkdir -p dist && cp -R "build/overlay/DeLSS Overlay.app" dist/
-          codesign --force --deep -s - "dist/DeLSS Overlay.app"
-          cp LICENSE dist/
+          APP="build/overlay/DeLSS Overlay.app"
+          BIN="$APP/Contents/MacOS/DeLSS Overlay"
+          lipo -info "$BIN" | tee /dev/stderr | grep -q 'x86_64 arm64'
+          # Only system frameworks/dylibs may be referenced (GLFW is static).
+          otool -L "$BIN"
+          ! otool -L "$BIN" | tail -n +2 | grep -vE '^\s+(/System/Library/|/usr/lib/)'
+          plutil -lint "$APP/Contents/Info.plist"
+          test "$(plutil -extract CFBundleExecutable raw "$APP/Contents/Info.plist")" = "DeLSS Overlay"
+          plutil -extract NSScreenCaptureUsageDescription raw "$APP/Contents/Info.plist"
+          test -f "$APP/Contents/Resources/AppIcon.icns"
+          codesign --force --deep --sign - "$APP"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          mkdir -p dist
+          # ditto keeps the exec bit, symlinks and the signature intact.
+          ditto -c -k --sequesterRsrc --keepParent "$APP" "dist/DeLSS-Overlay-macos-universal.zip"
+      - name: Smoke-launch the packaged app (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          rm -rf /tmp/smoke && mkdir /tmp/smoke && ditto -x -k dist/DeLSS-Overlay-macos-universal.zip /tmp/smoke
+          APP="/tmp/smoke/DeLSS Overlay.app"
+          codesign --verify --deep --strict "$APP"
+          "$APP/Contents/MacOS/DeLSS Overlay" --version
+          arch -arm64 "$APP/Contents/MacOS/DeLSS Overlay" --selftest
+          arch -x86_64 "$APP/Contents/MacOS/DeLSS Overlay" --version   # Rosetta slice starts too
+          # Launch like a double-click (LaunchServices) and check it stays up.
+          printf 'start_enabled = false\n' > /tmp/smoke.ini
+          open -n "$APP" --args --config /tmp/smoke.ini --no-save --exit-after-seconds 20
+          sleep 6
+          pgrep -fl "DeLSS Overlay.app/Contents/MacOS/DeLSS Overlay"
+          pkill -f "DeLSS Overlay.app/Contents/MacOS/DeLSS Overlay" || true
       - name: Package (Linux)
         if: runner.os == 'Linux'
         run: |
           mkdir -p dist && cp build/overlay/delss-overlay dist/ && cp LICENSE dist/
+          cp packaging/linux/delss-overlay.desktop dist/ && cp assets/icons/delss-256.png dist/delss-overlay.png
+          ./dist/delss-overlay --version
           cp -r tools/compositor dist/ 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         with:
@@ -62,7 +97,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         shell: bash
         run: |
-          if [ "$RUNNER_OS" = "Windows" ]; then 7z a "${{ matrix.artifact }}.zip" ./dist/*; else (cd dist && zip -qry "../${{ matrix.artifact }}.zip" .); fi
+          if [ "$RUNNER_OS" = "Windows" ]; then 7z a "${{ matrix.artifact }}.zip" ./dist/*;
+          elif [ "$RUNNER_OS" = "macOS" ]; then cp dist/DeLSS-Overlay-macos-universal.zip "${{ matrix.artifact }}.zip";
+          else (cd dist && zip -qry "../${{ matrix.artifact }}.zip" .); fi
       - uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/v')
         with:

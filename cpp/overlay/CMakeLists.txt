@@ -26,17 +26,24 @@ FetchContent_Declare(glfw URL https://github.com/glfw/glfw/releases/download/3.4
                      DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
 FetchContent_MakeAvailable(glfw)
 
-add_executable(delss-overlay main.cpp gl/renderer.cpp)
+add_executable(delss-overlay main.cpp gl/renderer.cpp platform/platform.cpp)
+target_compile_definitions(delss-overlay PRIVATE DELSS_VERSION="${PROJECT_VERSION}")
 target_link_libraries(delss-overlay PRIVATE delss delss_overlay_core glfw)
 target_include_directories(delss-overlay SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../third_party)
 target_compile_options(delss-overlay PRIVATE ${DELSS_WARNINGS})
 
 if(WIN32)
-  target_sources(delss-overlay PRIVATE platform/win32/win32_platform.cpp platform/win32/win32_tray.cpp)
+  target_sources(delss-overlay PRIVATE platform/win32/win32_platform.cpp platform/win32/win32_tray.cpp
+                                       platform/win32/delss-overlay.rc)
   target_link_libraries(delss-overlay PRIVATE d3d11 dxgi user32 shell32)
   set_target_properties(delss-overlay PROPERTIES WIN32_EXECUTABLE OFF)
 elseif(APPLE)
-  target_sources(delss-overlay PRIVATE platform/macos/macos_platform.mm platform/macos/macos_tray.mm)
+  set(DELSS_ICONS ${CMAKE_CURRENT_SOURCE_DIR}/../../assets/icons)
+  set(DELSS_MAC_RESOURCES ${DELSS_ICONS}/AppIcon.icns ${DELSS_ICONS}/MenuBarTemplate.png
+                          ${DELSS_ICONS}/MenuBarTemplate@2x.png)
+  set_source_files_properties(${DELSS_MAC_RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+  target_sources(delss-overlay PRIVATE platform/macos/macos_platform.mm platform/macos/macos_tray.mm
+                                       ${DELSS_MAC_RESOURCES})
   set_source_files_properties(platform/macos/macos_platform.mm platform/macos/macos_tray.mm PROPERTIES COMPILE_FLAGS
                                                                                                      "-fobjc-arc")
   target_link_libraries(
@@ -46,6 +53,7 @@ elseif(APPLE)
   # LSUIElement keeps the overlay out of the Dock (menu-bar item only).
   set_target_properties(
     delss-overlay PROPERTIES MACOSX_BUNDLE TRUE OUTPUT_NAME "DeLSS Overlay"
+                             MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
                              MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/platform/macos/Info.plist.in)
 else()
   find_package(X11 REQUIRED)

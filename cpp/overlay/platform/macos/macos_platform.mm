@@ -246,7 +246,12 @@ class MacPlatform final : public Platform {
   MacPlatform(MacPlatform&&) = delete;
   MacPlatform& operator=(MacPlatform&&) = delete;
 
-  void initHints() override { glfwInitHint(GLFW_COCOA_MENUBAR, GLFW_FALSE); }
+  void initHints() override {
+    glfwInitHint(GLFW_COCOA_MENUBAR, GLFW_FALSE);
+    // Register with TCC on first launch so the app shows up in the Screen
+    // Recording list (and the system prompt appears) before the user enables it.
+    if (!CGPreflightScreenCaptureAccess()) CGRequestScreenCaptureAccess();
+  }
 
   void windowHints() override {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
@@ -276,6 +281,14 @@ class MacPlatform final : public Platform {
   }
 
   std::unique_ptr<ScreenCapture> createCapture(const MonitorInfo& m, ExcludedWindows excluded) override {
+    // Ask up front: triggers the system prompt once, and gives a clear error
+    // instead of an opaque ScreenCaptureKit failure.
+    if (!CGPreflightScreenCaptureAccess()) {
+      CGRequestScreenCaptureAccess();
+      throw std::runtime_error(
+          "DeLSS Overlay needs Screen Recording permission. Enable it in System Settings > Privacy & "
+          "Security > Screen Recording, then press Ctrl+Option+D (or relaunch).");
+    }
     if (@available(macOS 12.3, *)) return std::make_unique<SckCapture>(m, excluded);
     throw std::runtime_error("delss-overlay needs macOS 12.3 or newer (ScreenCaptureKit)");
   }
@@ -288,6 +301,26 @@ class MacPlatform final : public Platform {
 
   [[nodiscard]] std::vector<std::string> warnings() const override { return warnings_; }
   [[nodiscard]] std::string name() const override { return "macOS"; }
+
+  void reportError(const std::string& message) override {
+    Platform::reportError(message);
+    // Launched from Finder there is no terminal: show the reason.
+    NSAlert* alert = [[NSAlert alloc] init];
+    const bool permission = message.find("Screen Recording") != std::string::npos;
+    alert.messageText = permission ? @"DeLSS Overlay needs Screen Recording permission" : @"DeLSS Overlay";
+    alert.informativeText = [NSString stringWithUTF8String:message.c_str()];
+    if (permission) {
+      [alert addButtonWithTitle:@"Open Privacy Settings"];
+      [alert addButtonWithTitle:@"Later"];
+    }
+    [NSApp activateIgnoringOtherApps:YES];
+    if ([alert runModal] == NSAlertFirstButtonReturn && permission) {
+      [[NSWorkspace sharedWorkspace]
+          openURL:[NSURL
+                      URLWithString:
+                          @"x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"]];
+    }
+  }
 
  private:
   void ensureHotkeys() {

@@ -51,6 +51,7 @@ struct Options {
   int exitAfterFrames = 0;
   double exitAfterSeconds = 0.0;
   bool debugNoExclude = false;  // test-only negative control: capture sees the overlay
+  bool selftest = false;
 };
 
 void usage() {
@@ -66,6 +67,7 @@ void usage() {
       "  --list-monitors | --list-presets\n"
       "  --dump DIR [--dump-frame N]   save capture_<m>.png and output_<m>.png at frame N\n"
       "  --exit-after-frames N | --exit-after-seconds S\n"
+      "  --version | --selftest   print the version / render every preset offscreen and exit\n"
       "Hotkeys: Ctrl+Alt+D toggle, Ctrl+Alt+P / O next / previous preset,\n"
       "         Ctrl+Alt+Up / Down intensity, Ctrl+Alt+H HUD, Ctrl+Alt+Esc or Ctrl+Alt+Q exit.");
 }
@@ -108,7 +110,12 @@ Options parseArgs(int argc, char** argv) {
       o.exitAfterSeconds = std::stod(next());
     else if (a == "--debug-no-exclude")
       o.debugNoExclude = true;
-    else if (a == "-h" || a == "--help") {
+    else if (a == "--selftest")
+      o.selftest = true;
+    else if (a == "--version") {
+      std::printf("delss-overlay %s\n", DELSS_VERSION);
+      std::exit(0);  // NOLINT(concurrency-mt-unsafe)
+    } else if (a == "-h" || a == "--help") {
       usage();
       std::exit(0);  // NOLINT(concurrency-mt-unsafe)
     } else {
@@ -157,6 +164,80 @@ struct Output {
   Clock::time_point lastGoodCapture = Clock::now();
   int frames = 0;
 };
+
+/// Proves the binary starts and the GL + shader path works on this machine,
+/// without touching the screen: hidden window, every preset rendered into an
+/// offscreen target from a synthetic frame, output sanity-checked.
+int selftest(ov::Platform& platform) {
+  glfwDefaultWindowHints();
+  glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+  platform.windowHints();
+  GLFWwindow* window = glfwCreateWindow(64, 64, "delss-overlay selftest", nullptr, nullptr);
+  if (window == nullptr) throw std::runtime_error("selftest: cannot create a GL context");
+  glfwMakeContextCurrent(window);
+  std::string missing;
+  if (!delss::gl::load(loadProc, &missing))
+    throw std::runtime_error("selftest: GL entry point missing: " + missing);
+  std::printf("delss-overlay %s selftest on %s / %s\n", DELSS_VERSION,
+              reinterpret_cast<const char*>(glGetString(GL_RENDERER)),
+              reinterpret_cast<const char*>(glGetString(GL_VERSION)));
+  constexpr int kW = 96;
+  constexpr int kH = 64;
+  ov::CapturedFrame frame;
+  frame.width = kW;
+  frame.height = kH;
+  frame.stride = kW * 4;
+  frame.pixels.resize(static_cast<size_t>(kW * kH * 4));
+  for (int y = 0; y < kH; ++y) {
+    for (int x = 0; x < kW; ++x) {
+      auto* p = &frame.pixels[static_cast<size_t>((y * kW + x) * 4)];
+      p[0] = static_cast<std::uint8_t>(x * 255 / kW);
+      p[1] = static_cast<std::uint8_t>(y * 255 / kH);
+      p[2] = static_cast<std::uint8_t>(((x / 8 + y / 8) % 2) * 255);
+      p[3] = 255;
+    }
+  }
+  std::vector<std::uint8_t> rgba;
+  ov::toGlRgba(frame, rgba);
+  GLuint src = 0;
+  GLuint dst = 0;
+  GLuint fbo = 0;
+  glGenTextures(1, &src);
+  glBindTexture(GL_TEXTURE_2D, src);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, kW, kH, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgba.data());
+  glGenTextures(1, &dst);
+  glBindTexture(GL_TEXTURE_2D, dst);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, kW, kH, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+  glGenFramebuffers(1, &fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, dst, 0);
+  int failures = 0;
+  for (const auto& preset : delss::presets()) {
+    delss::Pipeline pipeline;
+    pipeline.setChain(delss::presetChain(preset.id));
+    pipeline.render(delss::FrameInputs{src}, kW, kH, fbo);
+    std::vector<std::uint8_t> out(static_cast<size_t>(kW * kH * 4));
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glReadPixels(0, 0, kW, kH, GL_RGBA, GL_UNSIGNED_BYTE, out.data());
+    int lo = 255;
+    int hi = 0;
+    for (size_t i = 0; i < out.size(); i += 4) {
+      const int l = (out[i] + out[i + 1] + out[i + 2]) / 3;
+      lo = std::min(lo, l);
+      hi = std::max(hi, l);
+    }
+    const bool ok = glGetError() == GL_NO_ERROR && hi - lo > 16;  // not blank, not one flat colour
+    if (!ok) ++failures;
+    std::printf("%-4s %-10s luma range %d..%d\n", ok ? "ok" : "FAIL", std::string(preset.id).c_str(), lo, hi);
+  }
+  glDeleteFramebuffers(1, &fbo);
+  glDeleteTextures(1, &src);
+  glDeleteTextures(1, &dst);
+  glfwDestroyWindow(window);
+  std::printf("selftest %s\n", failures == 0 ? "passed" : "FAILED");
+  return failures == 0 ? 0 : 1;
+}
 
 class App {
  public:
@@ -340,7 +421,11 @@ int App::run() {
   state_.intensity = settings_.intensity;
   state_.hud = settings_.hud;
   state_.monitors = ov::parseMonitorList(settings_.monitors, static_cast<int>(monitors_.size()));
-  state_.enabled = options_.forceEnable || settings_.startEnabled;
+  // First run (no settings file yet) starts enabled, so launching the app by
+  // double-click visibly does something instead of waiting for a hotkey.
+  const bool firstRun = !std::filesystem::exists(options_.configPath);
+  state_.enabled = options_.forceEnable || settings_.startEnabled || firstRun;
+  if (firstRun) dirty_ = true, dirtySince_ = Clock::now();
   for (const auto& w : platform_.warnings()) std::fprintf(stderr, "warning: %s\n", w.c_str());
 
   tray_ = ov::createTray();
@@ -381,7 +466,19 @@ int App::run() {
     }
     if (state_.quit) break;
     if (monitorsChanged || (!state_.enabled && !outputs_.empty())) destroyOutputs();
-    if (state_.enabled && outputs_.empty()) createOutputs();
+    if (state_.enabled && outputs_.empty()) {
+      // A capture that cannot start (macOS Screen Recording not granted, DXGI
+      // unavailable, ...) must not kill the app: stay alive in the tray,
+      // explain, and let the user retry with the hotkey.
+      try {
+        createOutputs();
+      } catch (const std::exception& e) {
+        destroyOutputs();
+        state_.enabled = false;
+        updateTray();
+        platform_.reportError(e.what());
+      }
+    }
 
     if (outputs_.empty()) {
       glfwWaitEventsTimeout(0.03);  // idle: just keep polling hotkeys and the tray
@@ -433,7 +530,9 @@ int main(int argc, char** argv) {
         [](int code, const char* message) { std::fprintf(stderr, "GLFW %d: %s\n", code, message); });
     if (glfwInit() != GLFW_TRUE) throw std::runtime_error("glfwInit failed (no display?)");
     int rc = 0;
-    {
+    if (options.selftest) {
+      rc = selftest(*platform);
+    } else {
       App app(std::move(options), *platform);
       rc = app.run();
     }

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 # delss-overlay uses ScreenCaptureKit (macOS 12.3+).
 set(CMAKE_OSX_DEPLOYMENT_TARGET 12.3 CACHE STRING "Minimum macOS version")
-project(delss VERSION 0.2.0 LANGUAGES CXX)
+project(delss VERSION 0.2.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
