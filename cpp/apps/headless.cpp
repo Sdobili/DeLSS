@@ -2,7 +2,9 @@
 
 #include <EGL/eglext.h>
 
+#include <algorithm>
 #include <array>
+#include <cstdlib>
 #include <cstring>
 #include <stdexcept>
 
@@ -151,5 +153,50 @@ Image readCanvas(const Canvas& canvas) {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   return {canvas.width, canvas.height, flipRows(px, canvas.width, canvas.height)};
 }
+
+// Same tolerance as tests/web/browser.mjs: a pixel is bad only if nothing in
+// the reference's 3x3 neighborhood matches it within 16 (edge shifts by one
+// pixel from bilinear-precision differences are not visible regressions).
+Diff compare(const Image& a, const Image& b) {
+  Diff d;
+  if (a.width != b.width || a.height != b.height) return {255.0, 1.0, 255};
+  const int w = a.width;
+  const int h = a.height;
+  const auto diffAt = [&](size_t i, size_t j) {
+    int px = 0;
+    for (size_t c = 0; c < 3; ++c)
+      px = std::max(px, std::abs(int{a.rgba[i * 4 + c]} - int{b.rgba[j * 4 + c]}));
+    return px;
+  };
+  double sum = 0.0;
+  size_t bad = 0;
+  for (int y = 0; y < h; ++y) {
+    for (int x = 0; x < w; ++x) {
+      const size_t i = (static_cast<size_t>(y) * static_cast<size_t>(w)) + static_cast<size_t>(x);
+      for (size_t c = 0; c < 3; ++c) sum += std::abs(int{a.rgba[i * 4 + c]} - int{b.rgba[i * 4 + c]});
+      const int px = diffAt(i, i);
+      d.max = std::max(d.max, px);
+      if (px <= 16) continue;
+      int best = px;
+      for (int dy = -1; dy <= 1; ++dy) {
+        for (int dx = -1; dx <= 1; ++dx) {
+          const int nx = x + dx;
+          const int ny = y + dy;
+          if (nx >= 0 && ny >= 0 && nx < w && ny < h) {
+            best = std::min(best, diffAt(i, (static_cast<size_t>(ny) * static_cast<size_t>(w)) +
+                                                static_cast<size_t>(nx)));
+          }
+        }
+      }
+      if (best > 16) ++bad;
+    }
+  }
+  const auto n = static_cast<double>(w) * h;
+  d.mean = sum / (n * 3.0);
+  d.badRatio = static_cast<double>(bad) / n;
+  return d;
+}
+
+bool passes(const Diff& d) { return d.mean < 1.0 && d.badRatio < 0.005; }
 
 }  // namespace delss::headless

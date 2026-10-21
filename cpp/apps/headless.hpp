@@ -52,4 +52,16 @@ Canvas createCanvas(int width, int height);
 void destroyCanvas(Canvas& canvas);
 Image readCanvas(const Canvas& canvas);
 
+struct Diff {
+  double mean = 0.0;
+  double badRatio = 0.0;
+  int max = 0;
+};
+
+/// Golden comparison shared by every test (same tolerance as the WebGL tests):
+/// a pixel is bad only if nothing in the reference's 3x3 neighbourhood is
+/// within 16, so one-pixel edge shifts from GPU precision do not fail.
+Diff compare(const Image& a, const Image& b);
+bool passes(const Diff& d);
+
 }  // namespace delss::headless
