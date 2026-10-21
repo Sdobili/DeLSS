@@ -46,7 +46,7 @@ class Win32Tray final : public Tray {
     icon_.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     icon_.uCallbackMessage = kTrayMessage;
     icon_.hIcon = LoadIconW(nullptr, MAKEINTRESOURCEW(32512));  // IDI_APPLICATION
-        lstrcpynW(icon_.szTip, L"DeLSS overlay (Ctrl+Alt+D)", ARRAYSIZE(icon_.szTip));
+    lstrcpynW(icon_.szTip, L"DeLSS overlay (Ctrl+Alt+D)", ARRAYSIZE(icon_.szTip));
     Shell_NotifyIconW(NIM_ADD, &icon_);
   }
   ~Win32Tray() override {

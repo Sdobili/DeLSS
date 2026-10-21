@@ -219,7 +219,8 @@ struct Pipeline::Impl {
       std::array<char, 256> buf{};
       GLint size = 0;
       GLenum type = 0;
-      glGetActiveUniform(p.id, static_cast<GLuint>(i), static_cast<GLsizei>(buf.size()), nullptr, &size, &type, buf.data());
+      glGetActiveUniform(p.id, static_cast<GLuint>(i), static_cast<GLsizei>(buf.size()), nullptr, &size,
+                         &type, buf.data());
       std::string uname(buf.data());
       const GLint loc = glGetUniformLocation(p.id, uname.c_str());
       if (const auto bracket = uname.find('['); bracket != std::string::npos) uname.resize(bracket);
