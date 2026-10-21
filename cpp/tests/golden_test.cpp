@@ -75,7 +75,7 @@ bool passes(const Diff& d) { return d.mean < 1.0 && d.badRatio < 0.005; }
 
 int main() {
   const fs::path root = DELSS_SOURCE_DIR;
-  const fs::path out = fs::current_path() / "golden-cpp";
+  const fs::path out = fs::current_path() / DELSS_OUT_DIR;
   fs::create_directories(out);
   int failures = 0;
   int checks = 0;

@@ -58,9 +58,9 @@ jobs:
       - name: Cross-implementation golden test (llvmpipe vs WebGL goldens)
         run: ctest --test-dir build --output-on-failure
       - name: clang-format
-        run: clang-format --dry-run --Werror cpp/include/delss/delss.hpp cpp/include/delss/types.hpp cpp/src/*.cpp cpp/apps/*.[ch]pp cpp/tests/*.cpp
+        run: clang-format --dry-run --Werror cpp/include/delss/delss.hpp cpp/include/delss/types.hpp cpp/include/delss/gl.hpp cpp/src/*.cpp cpp/apps/*.[ch]pp cpp/tests/*.cpp
       - name: clang-tidy
-        run: clang-tidy -p build cpp/src/delss.cpp cpp/apps/*.cpp cpp/tests/*.cpp
+        run: clang-tidy -p build cpp/src/delss.cpp cpp/src/gl.cpp cpp/apps/*.cpp cpp/tests/*.cpp
       - uses: actions/upload-artifact@v4
         if: always()
         with:

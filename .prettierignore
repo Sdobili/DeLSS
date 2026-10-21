@@ -6,3 +6,4 @@ cpp/include/delss/generated.hpp
 web/vendor/
 package-lock.json
 *.md
+*.inc

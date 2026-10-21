@@ -1,9 +1,8 @@
 // DeLSS C++ reference library: the same GLSL passes as the WebGL2 runtime,
-// driven through OpenGL ES 3.0 (desktop GL 4.3+ also runs ES 3.0 shaders via
-// ARB_ES3_compatibility). Requires a current GL context on the calling thread.
+// driven through OpenGL ES 3.0, or desktop GL 3.3+/4.1 core with the shaders
+// translated at load time (see delss/gl.hpp). Requires a current GL context
+// on the calling thread.
 #pragma once
-
-#include <GLES3/gl3.h>
 
 #include <map>
 #include <memory>
@@ -11,6 +10,7 @@
 #include <string_view>
 #include <vector>
 
+#include "delss/gl.hpp"
 #include "delss/types.hpp"
 
 namespace delss {

@@ -26,8 +26,9 @@ constexpr std::array<std::pair<const char*, GLint>, 6> kSamplers{{
 
 GLuint compile(GLenum type, std::string_view source, std::string_view label) {
   const GLuint shader = glCreateShader(type);
-  const char* text = source.data();
-  const auto length = static_cast<GLint>(source.size());
+  const std::string translated = gl::translateShader(source);
+  const char* text = translated.data();
+  const auto length = static_cast<GLint>(translated.size());
   glShaderSource(shader, 1, &text, &length);
   glCompileShader(shader);
   GLint ok = GL_FALSE;
@@ -85,7 +86,8 @@ Target createTarget(int width, int height) {
   Target t;
   glGenTextures(1, &t.texture);
   glBindTexture(GL_TEXTURE_2D, t.texture);
-  glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
+  // glTexImage2D rather than glTexStorage2D: the latter is missing on macOS GL 4.1.
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
