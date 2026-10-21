@@ -213,3 +213,9 @@ docs/gallery/   README 用的对比图
 ## 素材
 
 `web/samples/` 下的照片由 AI 生成，3D 场景由 `web/demo/scene.js` 里的光线步进着色器实时渲染，都没有第三方版权。代码采用 MIT 许可，`cpp/third_party/` 下的 stb 是公有领域。
+
+---
+
+> **免责声明 / Disclaimer**  
+> 纯属整活，非官方作品，与 NVIDIA 无关。DLSS 是 NVIDIA 的商标。  
+> Parody project. Not affiliated with or endorsed by NVIDIA. DLSS is a trademark of NVIDIA Corporation.
