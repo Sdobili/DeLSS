@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
+# delss-overlay uses ScreenCaptureKit (macOS 12.3+).
+set(CMAKE_OSX_DEPLOYMENT_TARGET 12.3 CACHE STRING "Minimum macOS version")
 project(delss VERSION 0.2.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -22,6 +24,12 @@ else()
 endif()
 option(DELSS_BUILD_TOOLS "Build the headless CLI and tests (needs EGL)" ${_delss_tools_default})
 option(DELSS_BUILD_OVERLAY "Build delss-overlay, the screen-wide filter app" OFF)
+
+if(MSVC)
+  # generated.hpp carries UTF-8 preset labels; windows.h must not define min/max.
+  add_compile_options(/utf-8)
+  add_compile_definitions(NOMINMAX _CRT_SECURE_NO_WARNINGS)
+endif()
 
 set(DELSS_WARNINGS "")
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
