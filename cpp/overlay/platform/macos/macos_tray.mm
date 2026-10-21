@@ -38,7 +38,7 @@ class MacTray final : public Tray {
     // Monochrome template image: macOS tints it for light/dark menu bars.
     NSImage* image = [NSImage imageNamed:@"MenuBarTemplate"];
     if (image != nil) {
-      image.template = YES;
+      [image setTemplate:YES];  // "template" is a C++ keyword in Objective-C++
       image.size = NSMakeSize(18, 18);
       item_.button.image = image;
     } else {
