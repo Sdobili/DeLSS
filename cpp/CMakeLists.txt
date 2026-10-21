@@ -78,6 +78,8 @@ if(DELSS_BUILD_TOOLS)
   add_executable(delss-cli apps/delss_cli.cpp)
   target_link_libraries(delss-cli PRIVATE delss_headless)
   add_test(NAME cli_list COMMAND delss-cli --list)
+  add_executable(delss-imgdiff apps/imgdiff.cpp)
+  target_link_libraries(delss-imgdiff PRIVATE delss_headless)
 
   # The desktop-GL path that Windows and macOS use, exercised on Mesa's desktop
   # GL 3.3 core profile: proves the shader translation matches the goldens.

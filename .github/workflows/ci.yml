@@ -52,17 +52,24 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libegl-dev libgles-dev libegl-mesa0 \
-            libgl1-mesa-dri ninja-build clang-format clang-tidy
-      - run: cmake -S cpp -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+            libgl1-mesa-dri ninja-build clang-format clang-tidy \
+            libx11-dev libxcomposite-dev libxext-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
+            libayatana-appindicator3-dev xvfb xdotool imagemagick x11-utils
+      - run: cmake -S cpp -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DDELSS_BUILD_OVERLAY=ON
       - run: cmake --build build
-      - name: Cross-implementation golden test (llvmpipe vs WebGL goldens)
+      - name: Golden tests (GLES + desktop GL) and the X11 overlay end-to-end test on Xvfb
         run: ctest --test-dir build --output-on-failure
       - name: clang-format
-        run: clang-format --dry-run --Werror cpp/include/delss/delss.hpp cpp/include/delss/types.hpp cpp/include/delss/gl.hpp cpp/src/*.cpp cpp/apps/*.[ch]pp cpp/tests/*.cpp
+        run: |
+          clang-format --dry-run --Werror cpp/include/delss/delss.hpp cpp/include/delss/types.hpp cpp/include/delss/gl.hpp cpp/src/*.cpp cpp/apps/*.[ch]pp cpp/tests/*.cpp \
+            $(git ls-files 'cpp/overlay/*.cpp' 'cpp/overlay/*.hpp' 'cpp/overlay/*.mm')
       - name: clang-tidy
         run: clang-tidy -p build cpp/src/delss.cpp cpp/src/gl.cpp cpp/apps/*.cpp cpp/tests/*.cpp
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: cpp-golden-output
-          path: build/golden-cpp/
+          path: |
+            build/golden-cpp/
+            build/golden-cpp_desktop/
+            build/overlay/e2e/
